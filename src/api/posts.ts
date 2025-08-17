@@ -37,6 +37,10 @@ export interface PostsResponse {
   limit: number;
 }
 
+export interface AudioUrlResponse {
+  audio_file: string;
+}
+
 export const postsAPI = {
   // Get all posts with pagination
   getPosts: async (): Promise<PostWithAuthor[]> => {
@@ -82,6 +86,12 @@ export const postsAPI = {
   // Like a post
   likePost: async (id: string): Promise<Post> => {
     const response = await api.post(`/posts/${id}/like`);
+    return response.data;
+  },
+
+  // Audio url
+  getPostAudioUrl: async (id: string): Promise<AudioUrlResponse> => {
+    const response = await api.get(`/posts/${id}/tts`);
     return response.data;
   },
 };

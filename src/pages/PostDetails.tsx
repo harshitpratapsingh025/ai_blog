@@ -217,7 +217,8 @@ export function PostDetails() {
         <div className="mb-8">
           <AudioPlayer 
             title={post.title}
-            content={post.content}
+            audioUrl={post.audioUrl}
+            id={post.id}
           />
         </div>
 

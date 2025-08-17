@@ -7,11 +7,15 @@ import { PostCard } from "@/components/Posts/PostCard";
 import { FilterBar } from "@/components/Posts/FilterBar";
 import { fetchPosts, clearPosts } from "@/store/slices/postsSlice";
 import type { RootState, AppDispatch } from "@/store";
+import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
 
 export function Home() {
   const dispatch = useDispatch<AppDispatch>();
-  const { posts, loading, error, hasMore, filter } = useSelector((state: RootState) => state.posts);
+  const { posts, loading, error, hasMore, filter } = useSelector(
+    (state: RootState) => state.posts
+  );
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     dispatch(clearPosts());
@@ -65,19 +69,20 @@ export function Home() {
           Content
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          Write better, faster, and smarter with our AI-assisted blogging platform. 
-          Get suggestions, improve readability, and discover trending topics.
+          Write better, faster, and smarter with our AI-assisted blogging
+          platform. Get suggestions, improve readability, and discover trending
+          topics.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/new-post">
-            <Button className="btn-primary">
-              Start Writing
-            </Button>
-          </Link>
-          <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+        {isAuthenticated && (
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/new-post">
+              <Button className="btn-primary">Start Writing</Button>
+            </Link>
+            {/* <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
             Explore Posts
-          </Button>
-        </div>
+          </Button> */}
+          </div>
+        )}
       </motion.div>
 
       {/* Filter Bar */}
@@ -89,11 +94,13 @@ export function Home() {
           <div className="flex items-center">
             <i className="fas fa-exclamation-triangle text-destructive mr-3"></i>
             <div>
-              <h3 className="font-medium text-destructive">Error loading posts</h3>
+              <h3 className="font-medium text-destructive">
+                Error loading posts
+              </h3>
               <p className="text-sm text-destructive/80">{error}</p>
             </div>
           </div>
-          <Button 
+          <Button
             onClick={() => dispatch(fetchPosts())}
             variant="outline"
             className="mt-4"
@@ -108,7 +115,7 @@ export function Home() {
         {posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}
-        
+
         {/* Loading Skeletons */}
         {loading && posts.length === 0 && (
           <>
@@ -130,9 +137,7 @@ export function Home() {
               : "Be the first to create a post!"}
           </p>
           <Link href="/new-post">
-            <Button className="btn-primary">
-              Create Your First Post
-            </Button>
+            <Button className="btn-primary">Create Your First Post</Button>
           </Link>
         </div>
       )}

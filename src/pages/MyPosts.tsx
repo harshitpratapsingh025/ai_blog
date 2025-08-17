@@ -25,31 +25,29 @@ import { useToast } from "@/hooks/use-toast";
 import type { PostWithAuthor } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 import { AppDispatch, RootState } from "@/store";
+import { postsAPI } from "@/api";
 
 export function MyPosts() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const dispatch = useDispatch<AppDispatch>();
-  const { myPosts, loading, error } = useSelector((state: RootState) => state.posts);
+  const { myPosts, loading, error } = useSelector(
+    (state: RootState) => state.posts
+  );
 
-   useEffect(() => {
+  useEffect(() => {
     dispatch(fetchMyPosts());
   }, [dispatch]);
 
-  const filteredPosts = myPosts.filter((post) =>
-    post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (post.tags || []).some((tag: string) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredPosts = myPosts.filter(
+    (post) =>
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (post.tags || []).some((tag: string) =>
+        tag.toLowerCase().includes(searchTerm.toLowerCase())
+      )
   );
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
 
   const getCategoryColor = (category: string) => {
     switch (category.toLowerCase()) {
@@ -64,21 +62,21 @@ export function MyPosts() {
     }
   };
 
-  const handleDeletePost = (postId: string) => {
-    // In real app, this would call delete API
-    toast({
-      title: "Post Deleted",
-      description: "Your post has been successfully deleted.",
-    });
+  const handleDeletePost = async (postId: string) => {
+    try {
+      await postsAPI.deletePost(postId);
+      dispatch(fetchMyPosts());
+      toast({
+        title: "Post Deleted",
+        description: "Your post has been successfully deleted.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete post. Please try again.",
+      });
+    }
   };
-
-  const handleDuplicatePost = (postId: string) => {
-    toast({
-      title: "Post Duplicated",
-      description: "A copy of your post has been created as a draft.",
-    });
-  };
-
   const PostCard = ({ post }: { post: PostWithAuthor }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -107,11 +105,7 @@ export function MyPosts() {
                 <i className="fas fa-edit mr-2"></i>
                 Edit Post
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDuplicatePost(post.id)}>
-                <i className="fas fa-copy mr-2"></i>
-                Duplicate
-              </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleDeletePost(post.id)}
                 className="text-destructive"
               >
@@ -123,7 +117,10 @@ export function MyPosts() {
         </div>
 
         <h3 className="text-xl font-semibold mb-2 line-clamp-2">
-          <Link href={`/posts/${post.id}`} className="hover:text-primary transition-colors">
+          <Link
+            href={`/posts/${post.id}`}
+            className="hover:text-primary transition-colors"
+          >
             {post.title}
           </Link>
         </h3>
@@ -147,7 +144,7 @@ export function MyPosts() {
               <span>{post.readingTime} min read</span>
             </div>
           </div>
-          
+
           <div className="flex items-center">
             <Badge variant={post.isPublished ? "default" : "secondary"}>
               {post.isPublished ? "Published" : "Draft"}
@@ -158,10 +155,20 @@ export function MyPosts() {
         <div className="mt-4 pt-4 border-t border-border">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>
-              Created {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }) : 'Unknown date'}
+              Created{" "}
+              {post.createdAt
+                ? formatDistanceToNow(new Date(post.createdAt), {
+                    addSuffix: true,
+                  })
+                : "Unknown date"}
             </span>
             <span>
-              Updated {post.updatedAt ? formatDistanceToNow(new Date(post.updatedAt), { addSuffix: true }) : 'Unknown date'}
+              Updated{" "}
+              {post.updatedAt
+                ? formatDistanceToNow(new Date(post.updatedAt), {
+                    addSuffix: true,
+                  })
+                : "Unknown date"}
             </span>
           </div>
         </div>
@@ -177,7 +184,10 @@ export function MyPosts() {
             <i className="fas fa-file-alt text-muted-foreground"></i>
           </div>
           <div>
-            <Link href={`/posts/${post.id}`} className="font-medium hover:text-primary transition-colors">
+            <Link
+              href={`/posts/${post.id}`}
+              className="font-medium hover:text-primary transition-colors"
+            >
               {post.title}
             </Link>
             <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
@@ -197,7 +207,9 @@ export function MyPosts() {
         </Badge>
       </TableCell>
       <TableCell className="text-sm text-muted-foreground">
-        {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }) : 'Unknown date'}
+        {post.createdAt
+          ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })
+          : "Unknown date"}
       </TableCell>
       <TableCell>
         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
@@ -223,11 +235,7 @@ export function MyPosts() {
               <i className="fas fa-edit mr-2"></i>
               Edit Post
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleDuplicatePost(post.id)}>
-              <i className="fas fa-copy mr-2"></i>
-              Duplicate
-            </DropdownMenuItem>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => handleDeletePost(post.id)}
               className="text-destructive"
             >
@@ -249,7 +257,7 @@ export function MyPosts() {
           <p className="text-muted-foreground mb-6">
             There was an error loading your posts. Please try again.
           </p>
-          <Button onClick={() => console.log('Refetch')} variant="outline">
+          <Button onClick={() => console.log("Refetch")} variant="outline">
             Try Again
           </Button>
         </div>
@@ -305,7 +313,7 @@ export function MyPosts() {
             <div className="ml-4">
               <p className="text-sm text-muted-foreground">Published</p>
               <p className="text-2xl font-bold">
-                {myPosts.filter(p => p.isPublished).length}
+                {myPosts.filter((p) => p.isPublished).length}
               </p>
             </div>
           </div>
@@ -319,7 +327,7 @@ export function MyPosts() {
             <div className="ml-4">
               <p className="text-sm text-muted-foreground">Drafts</p>
               <p className="text-2xl font-bold">
-                {myPosts.filter(p => !p.isPublished).length}
+                {myPosts.filter((p) => !p.isPublished).length}
               </p>
             </div>
           </div>
@@ -385,7 +393,10 @@ export function MyPosts() {
           {viewMode === "grid" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="bg-card rounded-lg shadow-sm border border-border p-6">
+                <div
+                  key={index}
+                  className="bg-card rounded-lg shadow-sm border border-border p-6"
+                >
                   <Skeleton className="h-4 w-20 mb-4" />
                   <Skeleton className="h-6 w-full mb-2" />
                   <Skeleton className="h-4 w-full mb-1" />
@@ -422,11 +433,21 @@ export function MyPosts() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-8" />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -441,7 +462,7 @@ export function MyPosts() {
             {searchTerm ? "No posts found" : "No posts yet"}
           </h3>
           <p className="text-muted-foreground mb-6">
-            {searchTerm 
+            {searchTerm
               ? "Try adjusting your search terms to find what you're looking for."
               : "Start creating amazing content with AI assistance."}
           </p>

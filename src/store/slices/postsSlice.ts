@@ -1,4 +1,8 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
+import {
+  createSlice,
+  createAsyncThunk,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
 import type { PostWithAuthor, Post } from "@shared/schema";
 import type { FilterState } from "@/types";
 import { postsAPI } from "@/api/posts";
@@ -9,6 +13,7 @@ interface PostsState {
   currentPost: PostWithAuthor | null;
   filter: FilterState;
   loading: boolean;
+  audioLoaded: boolean;
   error: string | null;
   hasMore: boolean;
   offset: number;
@@ -25,17 +30,15 @@ const initialState: PostsState = {
   },
   loading: false,
   error: null,
-  hasMore: true,
+  hasMore: false,
+  audioLoaded: false,
   offset: 0,
 };
 
-export const fetchPosts = createAsyncThunk(
-  "posts/fetchPosts",
-  async () => {
-    const response = await postsAPI.getPosts();
-    return response as PostWithAuthor[];
-  }
-);
+export const fetchPosts = createAsyncThunk("posts/fetchPosts", async () => {
+  const response = await postsAPI.getPosts();
+  return response as PostWithAuthor[];
+});
 
 export const fetchMyPosts = createAsyncThunk("posts/fetchMyPosts", async () => {
   const response = await postsAPI.getMyPosts();
@@ -58,6 +61,14 @@ export const likePost = createAsyncThunk(
   }
 );
 
+export const getPostAudioUrl = createAsyncThunk(
+  "posts/getPostAudioUrl",
+  async (postId: string) => {
+  const response =  await postsAPI.getPostAudioUrl(postId);
+  return response;
+  }
+);
+
 const postsSlice = createSlice({
   name: "posts",
   initialState,
@@ -65,12 +76,12 @@ const postsSlice = createSlice({
     setFilter: (state, action: PayloadAction<Partial<FilterState>>) => {
       state.filter = { ...state.filter, ...action.payload };
       state.offset = 0;
-      state.hasMore = true;
+      state.hasMore = false;
     },
     clearPosts: (state) => {
       state.posts = [];
       state.offset = 0;
-      state.hasMore = true;
+      state.hasMore = false;
     },
     clearCurrentPost: (state) => {
       state.currentPost = null;
@@ -109,6 +120,11 @@ const postsSlice = createSlice({
       .addCase(fetchPostById.fulfilled, (state, action) => {
         state.loading = false;
         state.currentPost = action.payload;
+      })
+      .addCase(getPostAudioUrl.fulfilled, (state, action) => {
+        state.loading = false;
+        state.audioLoaded = true;
+        state.currentPost.audioUrl = action.payload.audio_file;
       })
       .addCase(fetchPostById.rejected, (state, action) => {
         state.loading = false;

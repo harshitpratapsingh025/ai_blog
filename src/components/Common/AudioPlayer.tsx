@@ -2,13 +2,18 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { motion } from "framer-motion";
+import { getPostAudioUrl } from "@/store/slices";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
 
 interface AudioPlayerProps {
   title: string;
-  content: string;
+  audioUrl: string;
+  id: string;
 }
 
-export const AudioPlayer = ({ title, content }: AudioPlayerProps) => {
+export const AudioPlayer = ({ title, audioUrl, id }: AudioPlayerProps) => {
+  const { audioLoaded } = useSelector((state: RootState) => state.posts);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -16,17 +21,26 @@ export const AudioPlayer = ({ title, content }: AudioPlayerProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   const audioRef = useRef<HTMLAudioElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null);
+  const dispatch = useDispatch<AppDispatch>();
 
-  // Mock audio URL - in real app this would come from text-to-speech service
-  const audioUrl = "https://www2.cs.uic.edu/~i101/SoundFiles/BabyElephantWalk60.wav";
-
+  useEffect(() => {
+    if (audioLoaded) {
+      const audio = audioRef.current;
+      if (!audio) return;
+      audio.play().then(() => {
+        setIsPlaying(true);
+      }).catch((error) => {
+        console.error("Audio playback failed:", error);
+      }).finally(() => {
+        setIsLoading(false);
+      });
+    }
+  }, [audioLoaded]);
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-
     const setAudioData = () => {
       setDuration(audio.duration);
       setCurrentTime(audio.currentTime);
@@ -48,21 +62,24 @@ export const AudioPlayer = ({ title, content }: AudioPlayerProps) => {
   const togglePlayPause = async () => {
     const audio = audioRef.current;
     if (!audio) return;
-
-    setIsLoading(true);
-    
-    try {
-      if (isPlaying) {
-        audio.pause();
-        setIsPlaying(false);
-      } else {
-        await audio.play();
-        setIsPlaying(true);
+    if (!audioUrl) {
+      setIsLoading(true);
+      dispatch(getPostAudioUrl(id));
+    } else {
+      setIsLoading(true);
+      try {
+        if (isPlaying) {
+          audio.pause();
+          setIsPlaying(false);
+        } else {
+          await audio.play();
+          setIsPlaying(true);
+        }
+      } catch (error) {
+        console.error("Audio playback failed:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Audio playback failed:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -95,7 +112,10 @@ export const AudioPlayer = ({ title, content }: AudioPlayerProps) => {
   const skip = (seconds: number) => {
     const audio = audioRef.current;
     if (audio) {
-      audio.currentTime = Math.max(0, Math.min(duration, audio.currentTime + seconds));
+      audio.currentTime = Math.max(
+        0,
+        Math.min(duration, audio.currentTime + seconds)
+      );
     }
   };
 
@@ -114,15 +134,23 @@ export const AudioPlayer = ({ title, content }: AudioPlayerProps) => {
       animate={{ opacity: 1, y: 0 }}
       className="bg-gradient-to-r from-primary/5 to-secondary/5 backdrop-blur-sm border border-primary/20 rounded-2xl shadow-lg overflow-hidden"
     >
-      <audio ref={audioRef} src={audioUrl} preload="metadata" />
-      
+      <audio
+        ref={audioRef}
+        src={`http://localhost:8000/public/audios/${audioUrl}`}
+        preload="metadata"
+      />
+
       {/* Header */}
       <div className="p-6 pb-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <motion.div
               animate={{ rotate: isPlaying ? 360 : 0 }}
-              transition={{ duration: 2, repeat: isPlaying ? Infinity : 0, ease: "linear" }}
+              transition={{
+                duration: 2,
+                repeat: isPlaying ? Infinity : 0,
+                ease: "linear",
+              }}
               className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg"
             >
               <i className="fas fa-headphones text-white text-lg"></i>
@@ -134,14 +162,14 @@ export const AudioPlayer = ({ title, content }: AudioPlayerProps) => {
               </p>
             </div>
           </div>
-          
+
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
             className="text-muted-foreground hover:text-foreground"
           >
-            <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'}`}></i>
+            <i className={`fas fa-chevron-${isExpanded ? "up" : "down"}`}></i>
           </Button>
         </div>
       </div>
@@ -173,7 +201,7 @@ export const AudioPlayer = ({ title, content }: AudioPlayerProps) => {
           >
             <i className="fas fa-backward text-sm"></i>
           </Button>
-          
+
           <Button
             onClick={togglePlayPause}
             disabled={isLoading}
@@ -187,7 +215,7 @@ export const AudioPlayer = ({ title, content }: AudioPlayerProps) => {
               <i className="fas fa-play text-lg ml-1"></i>
             )}
           </Button>
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -211,7 +239,9 @@ export const AudioPlayer = ({ title, content }: AudioPlayerProps) => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Volume</span>
-                  <span className="text-xs text-muted-foreground">{Math.round(volume * 100)}%</span>
+                  <span className="text-xs text-muted-foreground">
+                    {Math.round(volume * 100)}%
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <i className="fas fa-volume-down text-muted-foreground"></i>
@@ -230,7 +260,9 @@ export const AudioPlayer = ({ title, content }: AudioPlayerProps) => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Speed</span>
-                  <span className="text-xs text-muted-foreground">{speed}x</span>
+                  <span className="text-xs text-muted-foreground">
+                    {speed}x
+                  </span>
                 </div>
                 <div className="flex space-x-1">
                   {[0.75, 1, 1.25, 1.5, 2].map((speedOption) => (
