@@ -21,8 +21,8 @@ const initialState: AIState = {
 
 export const reviewContent = createAsyncThunk(
   "ai/reviewContent",
-  async ({ content, postId }: { content: string; postId?: string }) => {
-    return await aiAPI.reviewContent({ content, postId });
+  async ({ content, title }: { content: string; title: string }) => {
+    return await aiAPI.reviewContent({ content, title });
   }
 );
 

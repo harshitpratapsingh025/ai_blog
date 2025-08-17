@@ -242,7 +242,7 @@ export function NewPost() {
           animate={{ opacity: 1, x: 0 }}
           className="lg:col-span-1 space-y-6"
         >
-          <AIReviewPanel content={post.content} />
+          <AIReviewPanel content={post.content} title={post.title}/>
           <TopicSuggestions />
         </motion.div>
       </div>

@@ -8,16 +8,16 @@ import { motion } from "framer-motion";
 
 interface AIReviewPanelProps {
   content: string;
-  postId?: string;
+  title: string;
 }
 
-export const AIReviewPanel = ({ content, postId }: AIReviewPanelProps) => {
+export const AIReviewPanel = ({ content, title }: AIReviewPanelProps) => {
   const dispatch = useDispatch();
   const { review, isReviewing, error } = useSelector((state: RootState) => state.ai);
 
   const handleReview = () => {
     if (content.trim()) {
-      dispatch(reviewContent({ content, postId }) as any);
+      dispatch(reviewContent({ content, title }) as any);
     }
   };
 
@@ -105,7 +105,7 @@ export const AIReviewPanel = ({ content, postId }: AIReviewPanelProps) => {
             <div>
               <h4 className="text-sm font-medium mb-2">Suggested Keywords</h4>
               <div className="flex flex-wrap gap-2">
-                {review.seoKeywords.map((keyword, index) => (
+                {review.seoKeywords.slice(0, 4).map((keyword, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {keyword}
                   </Badge>
@@ -117,7 +117,7 @@ export const AIReviewPanel = ({ content, postId }: AIReviewPanelProps) => {
           {/* AI Suggestions */}
           <div className="space-y-3">
             <h4 className="text-sm font-medium">Suggestions</h4>
-            {review.suggestions.map((suggestion, index) => (
+            {review.suggestions.slice(0, 3).map((suggestion, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, x: -20 }}

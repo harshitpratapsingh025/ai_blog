@@ -4,7 +4,7 @@ import type { TopicSuggestion } from '@shared/schema';
 
 export interface ReviewContentRequest {
   content: string;
-  postId?: string;
+  title: string;
 }
 
 export const aiAPI = {
